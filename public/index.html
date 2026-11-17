@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Database</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 0 12px; }
+    h1 { font-size: 1.4rem; }
+    form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    input { padding: 8px; flex: 1 1 150px; }
+    button { padding: 8px 12px; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>Student Database (CRUD)</h1>
+
+  <form id="form">
+    <input id="name" placeholder="Full name" required />
+    <input id="regNo" placeholder="Reg. No" required />
+    <input id="course" placeholder="Course" />
+    <button type="submit" id="submitBtn">Add</button>
+    <button type="button" id="cancelBtn" hidden>Cancel</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Reg. No</th><th>Course</th><th>Actions</th></tr>
+    </thead>
+    <tbody id="list"></tbody>
+  </table>
+
+  <script>
+    const API = "/api/students";
+    const form = document.getElementById("form");
+    const list = document.getElementById("list");
+    const submitBtn = document.getElementById("submitBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+    let editingId = null;
+
+    async function load() {
+      const res = await fetch(API);
+      const students = await res.json();
+      list.innerHTML = "";
+      students.forEach((s) => {
+        const tr = document.createElement("tr");
+        [s.name, s.regNo, s.course].forEach((v) => {
+          const td = document.createElement("td");
+          td.textContent = v;
+          tr.appendChild(td);
+        });
+        const td = document.createElement("td");
+        const edit = document.createElement("button");
+        edit.textContent = "Edit";
+        edit.onclick = () => startEdit(s);
+        const del = document.createElement("button");
+        del.textContent = "Delete";
+        del.onclick = () => remove(s._id);
+        td.append(edit, " ", del);
+        tr.appendChild(td);
+        list.appendChild(tr);
+      });
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = {
+        name: form.name.value,
+        regNo: form.regNo.value,
+        course: form.course.value,
+      };
+      await fetch(editingId ? `${API}/${editingId}` : API, {
+        method: editingId ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      reset();
+      load();
+    });
+
+    function startEdit(s) {
+      editingId = s._id;
+      form.name.value = s.name;
+      form.regNo.value = s.regNo;
+      form.course.value = s.course;
+      submitBtn.textContent = "Update";
+      cancelBtn.hidden = false;
+    }
+
+    async function remove(id) {
+      if (!confirm("Delete this record?")) return;
+      await fetch(`${API}/${id}`, { method: "DELETE" });
+      load();
+    }
+
+    function reset() {
+      editingId = null;
+      form.reset();
+      submitBtn.textContent = "Add";
+      cancelBtn.hidden = true;
+    }
+    cancelBtn.onclick = reset;
+
+    load();
+  </script>
+</body>
+</html>
