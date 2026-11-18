@@ -5,62 +5,201 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Student Database</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 0 12px; }
-    h1 { font-size: 1.4rem; }
-    form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-    input { padding: 8px; flex: 1 1 150px; }
-    button { padding: 8px 12px; cursor: pointer; }
+    :root {
+      --bg: #0b1530;
+      --card: #14224a;
+      --text: #e8eeff;
+      --muted: #9fb0d9;
+      --accent: #5eb5ff;
+      --accent-text: #0b1530;
+      --line: #2a3c73;
+      --danger: #ff6b81;
+    }
+    :root[data-theme="light"] {
+      --bg: #eaf0ff;
+      --card: #ffffff;
+      --text: #0b1530;
+      --muted: #52628f;
+      --accent: #2f5fd0;
+      --accent-text: #ffffff;
+      --line: #d3ddf5;
+      --danger: #d64560;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 16px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--accent); color: var(--accent-text);
+      display: grid; place-items: center; font-size: 22px;
+    }
+    h1 { margin: 0; font-size: 1.4rem; font-family: Georgia, serif; }
+    .sub { font-size: 0.7rem; letter-spacing: 0.12em; color: var(--muted); }
+    main { max-width: 900px; margin: 0 auto; padding: 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+    h2 { margin: 0 0 16px; font-family: Georgia, serif; }
+    form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    input {
+      flex: 1 1 160px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    input::placeholder { color: var(--muted); }
+    input:focus { outline: 2px solid var(--accent); }
+    button {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button:hover { border-color: var(--accent); }
+    .primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+    .danger { color: var(--danger); border-color: var(--danger); }
+    .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #f0f0f0; }
+    th {
+      text-align: left; font-size: 0.72rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted);
+      padding: 10px 8px; border-bottom: 1px solid var(--line);
+    }
+    td { padding: 12px 8px; border-bottom: 1px solid var(--line); }
+    td.actions { display: flex; gap: 8px; }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      background: var(--line); font-size: 0.8rem;
+    }
+    .empty { text-align: center; color: var(--muted); padding: 24px 8px; }
   </style>
 </head>
 <body>
-  <h1>Student Database (CRUD)</h1>
+  <header>
+    <div class="brand">
+      <div class="logo">&#127891;</div>
+      <div>
+        <h1>Student Database</h1>
+        <div class="sub">STUDENTS · CRUD OPERATIONS</div>
+      </div>
+    </div>
+    <button type="button" id="themeBtn">Light mode</button>
+  </header>
 
-  <form id="form">
-    <input id="name" placeholder="Full name" required />
-    <input id="regNo" placeholder="Reg. No" required />
-    <input id="course" placeholder="Course" />
-    <button type="submit" id="submitBtn">Add</button>
-    <button type="button" id="cancelBtn" hidden>Cancel</button>
-  </form>
+  <main>
+    <div class="card">
+      <h2>Students</h2>
 
-  <table>
-    <thead>
-      <tr><th>Name</th><th>Reg. No</th><th>Course</th><th>Actions</th></tr>
-    </thead>
-    <tbody id="list"></tbody>
-  </table>
+      <form id="form">
+        <input id="name" placeholder="Full name" required />
+        <input id="regNo" placeholder="Reg. No" required />
+        <input id="course" placeholder="Course" />
+        <button type="submit" id="submitBtn" class="primary">Add</button>
+        <button type="button" id="cancelBtn" hidden>Cancel</button>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Reg. No</th><th>Course</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="list"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
 
   <script>
     const API = "/api/students";
     const form = document.getElementById("form");
     const list = document.getElementById("list");
+    const nameInput = document.getElementById("name");
+    const regInput = document.getElementById("regNo");
+    const courseInput = document.getElementById("course");
     const submitBtn = document.getElementById("submitBtn");
     const cancelBtn = document.getElementById("cancelBtn");
+    const themeBtn = document.getElementById("themeBtn");
     let editingId = null;
+
+    // Theme toggle
+    function setTheme(t) {
+      document.documentElement.setAttribute("data-theme", t);
+      themeBtn.textContent = t === "dark" ? "Light mode" : "Dark mode";
+    }
+    themeBtn.onclick = () => {
+      const now = document.documentElement.getAttribute("data-theme");
+      setTheme(now === "light" ? "dark" : "light");
+    };
+    setTheme("dark");
 
     async function load() {
       const res = await fetch(API);
       const students = await res.json();
       list.innerHTML = "";
+
+      if (students.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 4;
+        td.className = "empty";
+        td.textContent = "No students yet. Add the first one above.";
+        tr.appendChild(td);
+        list.appendChild(tr);
+        return;
+      }
+
       students.forEach((s) => {
         const tr = document.createElement("tr");
-        [s.name, s.regNo, s.course].forEach((v) => {
-          const td = document.createElement("td");
-          td.textContent = v;
-          tr.appendChild(td);
-        });
-        const td = document.createElement("td");
+
+        const tdName = document.createElement("td");
+        tdName.textContent = s.name;
+        const tdReg = document.createElement("td");
+        tdReg.textContent = s.regNo;
+        const tdCourse = document.createElement("td");
+        if (s.course) {
+          const b = document.createElement("span");
+          b.className = "badge";
+          b.textContent = s.course;
+          tdCourse.appendChild(b);
+        }
+
+        const tdActions = document.createElement("td");
+        tdActions.className = "actions";
         const edit = document.createElement("button");
         edit.textContent = "Edit";
         edit.onclick = () => startEdit(s);
         const del = document.createElement("button");
         del.textContent = "Delete";
+        del.className = "danger";
         del.onclick = () => remove(s._id);
-        td.append(edit, " ", del);
-        tr.appendChild(td);
+        tdActions.append(edit, del);
+
+        tr.append(tdName, tdReg, tdCourse, tdActions);
         list.appendChild(tr);
       });
     }
@@ -68,9 +207,9 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const data = {
-        name: form.name.value,
-        regNo: form.regNo.value,
-        course: form.course.value,
+        name: nameInput.value,
+        regNo: regInput.value,
+        course: courseInput.value,
       };
       await fetch(editingId ? `${API}/${editingId}` : API, {
         method: editingId ? "PUT" : "POST",
@@ -83,11 +222,12 @@
 
     function startEdit(s) {
       editingId = s._id;
-      form.name.value = s.name;
-      form.regNo.value = s.regNo;
-      form.course.value = s.course;
+      nameInput.value = s.name;
+      regInput.value = s.regNo;
+      courseInput.value = s.course;
       submitBtn.textContent = "Update";
       cancelBtn.hidden = false;
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     async function remove(id) {
